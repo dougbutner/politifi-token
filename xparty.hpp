@@ -73,6 +73,8 @@ class [[eosio::contract]] xparty : public contract {
          uint64_t primary_key()const { return supply.symbol.code().raw(); }
       };
 
+
+
       // --- Store vesting records --- //
       TABLE vest_record {
          uint64_t       id;
@@ -92,6 +94,9 @@ class [[eosio::contract]] xparty : public contract {
          uint64_t       zip_code;
 
          uint64_t primary_key()const { return voter.value; }
+         uint64_t by_state() const { return eosio::name(state).value; }
+         uint64_t by_zip() const { return eosio::name(zip).value; }
+
       };
 
       typedef multi_index< "accounts"_n, account > accounts;

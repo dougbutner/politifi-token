@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "compare": "cpp",
+        "cstdint": "cpp",
+        "format": "cpp",
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp"
+    }
+}
