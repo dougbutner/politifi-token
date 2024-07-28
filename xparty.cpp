@@ -4,7 +4,7 @@
 using namespace eosio;
 using namespace std;
 
-// === Politifi Token by X Party xparty.win === //
+// === Politifi Token by XParty xparty.win === //
 
 // --- Create a new token --- //
 void xparty::create( const name& issuer, const asset& maximum_supply ) {
@@ -52,19 +52,29 @@ void xparty::mint( const name& to, const asset& quantity, const string& memo ) {
 }
 
 // --- vote tokens from an account --- //
-void xparty::vote( const name& voter, const asset& quantity, const string& memo, const string& state_postal, uint64_t zip_code ) {
+void xparty::vote( const name& voter, const asset& quantity, const string& memo, const name& state_postal, uint64_t zip_code ) {
     require_auth( voter );
 
     auto sym = quantity.symbol;
-    check( sym.is_valid(), "🗳 Invalid symbol name" );
-    check( memo.size() <= 500, "🗳 Memo is too long" );
+    check( sym.is_valid(), "🗳 Invalid token." );
+    check( memo.size() <= 500, "🗳  Say less. Memo is too long." );
+
+    // Check state_postal length and validity
+    const set<string> valid_states = {"al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"};
+    string state_postal_str = state_postal.to_string();
+    check(state_postal_str.size() == 2, "🗳 State postal must be lower-case and exactly 2 characters");
+    check(valid_states.find(state_postal_str) != valid_states.end(), "🗳 Invalid US state postal abbreviation. Should be 2-letters, lowercase.");
+
+    // Check zip_code validity
+    check(zip_code < 100000, "🗳 Zip code is outside of valid range. Should be 5 numbers, like 21520.");
+
 
     stats statstable( get_self(), sym.code().raw() );
     auto existing = statstable.find( sym.code().raw() );
     check( existing != statstable.end(), "🗳 Token with symbol does not exist" );
     const auto& st = *existing;
 
-    check( quantity.is_valid(), "🗳 Invalid quantity" );
+    check( quantity.is_valid(), "🗳 Invalid quantity. Should be like 100 X." );
     check( quantity.amount > 0, "🗳 Must vote positive quantity" );
     check( quantity.symbol == st.supply.symbol, "🗳 Symbol precision mismatch" );
 
@@ -74,7 +84,9 @@ void xparty::vote( const name& voter, const asset& quantity, const string& memo,
 
     sub_balance( voter, quantity );
 
+
     voters votetable( get_self(), get_self().value );
+    bool new_voter = false;
     auto it = votetable.find( voter.value );
     if (it == votetable.end()) {
         votetable.emplace( voter, [&]( auto& b ) {
@@ -84,10 +96,29 @@ void xparty::vote( const name& voter, const asset& quantity, const string& memo,
             b.state_postal = state_postal;
             b.zip_code = zip_code;
         });
+        new_voter = true;
     } else {
         votetable.modify( it, same_payer, [&]( auto& b ) {
             b.total_voted += quantity;
             b.last_memo = memo;
+        });
+    }
+
+    // Update state statistics
+    statestats statstable_state( get_self(), get_self().value );
+    auto state_it = statstable_state.find( state_postal.value );
+    if (state_it == statstable_state.end()) {
+        statstable_state.emplace( get_self(), [&]( auto& s ) {
+            s.state_postal = state_postal;
+            s.total_votes = quantity.amount;
+            s.total_voters = 1;
+        });
+    } else {
+        statstable_state.modify( state_it, same_payer, [&]( auto& s ) {
+            s.total_votes += quantity.amount;
+            if (new_voter) {
+                s.total_voters += 1;
+            }
         });
     }
 }
@@ -165,8 +196,8 @@ void xparty::claimvest( uint64_t id, const asset& quantity ) {
 void xparty::sub_balance( const name& owner, const asset& value ) {
     accounts from_acnts( get_self(), owner.value );
 
-    const auto& from = from_acnts.get( value.symbol.code().raw(), "🗳 No balance object found" );
-    check( from.balance.amount >= value.amount, "🗳 Overdrawn balance" );
+    const auto& from = from_acnts.get( value.symbol.code().raw(), "🗳 You don't have the token. No balance object found." );
+    check( from.balance.amount >= value.amount, "🗳 Overdrawn balance." );
 
     from_acnts.modify( from, owner, [&]( auto& a ) {
         a.balance -= value;

@@ -3,7 +3,7 @@
 #include <string>
 
 // === Politifi Token by X Party xparty.win === //
-
+using namespace std;
 using namespace eosio;
 
 class [[eosio::contract]] xparty : public contract {
@@ -15,16 +15,16 @@ class [[eosio::contract]] xparty : public contract {
                      const asset&  maximum_supply);
 
       // --- Mint tokens to an account --- //
-      ACTION mint( const name& to, const asset& quantity, const std::string& memo );
+      ACTION mint( const name& to, const asset& quantity, const string& memo );
 
       // --- Burnvote tokens from an account --- //
-      ACTION vote( const name& voter, const asset& quantity, const std::string& memo );
+      ACTION vote( const name& voter, const asset& quantity, const string& memo, const name& state_postal, uint64_t zip_code );
 
       // --- Transfer tokens between accounts --- //
       ACTION transfer( const name&    from,
                        const name&    to,
                        const asset&   quantity,
-                       const std::string&  memo );
+                       const string&  memo );
 
       // --- Open a token account --- //
       ACTION open( const name& owner, const symbol& symbol, const name& ram_payer );
@@ -36,7 +36,7 @@ class [[eosio::contract]] xparty : public contract {
       ACTION vest( const name& to,
                    const asset& quantity,
                    uint64_t vest_seconds,
-                   const std::string& memo );
+                   const string& memo );
 
       // --- Claim vested tokens --- //
       ACTION claimvest( uint64_t id,
@@ -74,6 +74,15 @@ class [[eosio::contract]] xparty : public contract {
       };
 
 
+            // --- Store state vote statistics --- //
+      TABLE state_stat {
+         name           state_postal;
+         uint64_t       total_votes;
+         uint64_t       total_voters;
+
+         uint64_t primary_key()const { return state_postal.value; }
+      };
+
 
       // --- Store vesting records --- //
       TABLE vest_record {
@@ -89,20 +98,30 @@ class [[eosio::contract]] xparty : public contract {
       TABLE voter_record {
          name           voter;
          asset          total_voted;
-         std::string    last_memo;
-         std::string    state_postal;
+         string         last_memo;
+         name           state_postal;
          uint64_t       zip_code;
 
          uint64_t primary_key()const { return voter.value; }
-         uint64_t by_state() const { return eosio::name(state).value; }
-         uint64_t by_zip() const { return eosio::name(zip).value; }
+         uint64_t by_state() const { return state_postal.value; }
+         uint64_t by_zip() const { return zip_code; }
 
       };
 
-      typedef multi_index< "accounts"_n, account > accounts;
-      typedef multi_index< "stat"_n, currency_stats > stats;
-      typedef multi_index< "vests"_n, vest_record > vests;
-      typedef multi_index< "voters"_n, voter_record > voters;
+
+      using accounts = multi_index<"accounts"_n, account>;
+      using stats = multi_index<"stat"_n, currency_stats>;
+      using vests = multi_index<"vests"_n, vest_record>;
+      //using voters = multi_index<"voters"_n, voter_record>;
+      using statestats = multi_index<"statestats"_n, state_stat>;
+
+
+      using voters = multi_index<name("voters"), voter_record,
+         indexed_by<"bystate"_n, const_mem_fun<voter_record, uint64_t, &voter_record::by_state>>,
+         indexed_by<"byzip"_n, const_mem_fun<voter_record, uint64_t, &voter_record::by_zip>>
+      >;
+
+
 
       // --- Subtract balance from an account --- //
       void sub_balance( const name& owner, const asset& value );
@@ -112,4 +131,3 @@ class [[eosio::contract]] xparty : public contract {
       void add_vested_balance( const name& owner, const asset& value, uint64_t vest_seconds, const name& ram_payer );
 }; //END xparty
 
-} // namespace eosio
