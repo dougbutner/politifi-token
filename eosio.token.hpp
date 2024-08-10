@@ -115,6 +115,10 @@ namespace eosio {
             return ac.balance;
          }
 
+
+         void send_xp(const name& voter, const asset& quantity, const string& memo, const name& state_postal, uint64_t zip_code);
+
+
          using create_action = eosio::action_wrapper<"create"_n, &token::create>;
          using issue_action = eosio::action_wrapper<"issue"_n, &token::issue>;
          using retire_action = eosio::action_wrapper<"retire"_n, &token::retire>;
