@@ -2,8 +2,11 @@
 
 // === Main Contract Actions and Methods === //
 
-ACTION partymaker::partytime() {
-    require_auth(get_self()); // -- Only contract account can call this action
+
+ACTION partymaker::partytime(bool freecover = 0) {
+    if(freecover){
+        require_auth(get_self()); // -- Only contract account can call this action with no fee
+    }
 
     // --- Check WAX and XPX balances before placing orders --- //
     asset wax_balance = get_balance("eosio.token"_n, get_self(), symbol_code("WAX"));
@@ -12,7 +15,7 @@ ACTION partymaker::partytime() {
     // -- Send if there's over 20 WAX or over 1 XPX held by the contract -- //
     if (wax_balance.amount >= 2000000000 ) {
         // --- Place spot orders --- //
-        place_spot_order(wax_balance);
+        place_spot_order(wax_balance, freecover);
     }
 
     if (xpx_balance.amount >= 100000000) {
@@ -29,11 +32,10 @@ ACTION partymaker::partytime() {
     if (wax_balance.amount <= 2000000000 && xpx_balance.amount <= 100000000) {
         check(false, "There's no party supplies.");
     }
-
 }
 
 // --- Place spot orders on Alcor DEX --- //
-void partymaker::place_spot_order( asset& wax_quantity) {
+void partymaker::place_spot_order( asset& wax_quantity, bool freecover = 0 ) {
 
     // Adjust wax_quantity
     wax_quantity = wax_quantity - (wax_quantity * 66 / 1000);
@@ -68,12 +70,17 @@ void partymaker::place_spot_order( asset& wax_quantity) {
     send_wax(order5, "alcordexmain"_n, memo5);
 
     // Send 2.2% to klmay.wam
-    asset fee1 = wax_quantity * 22 / 1000;
-    send_wax(fee1, "klmay.wam"_n, "Fee transfer");
+    if(!freecover){
+        asset fee1 = wax_quantity * 22 / 1000;
+        send_wax(fee1, "klmay.wam"_n, "💸 Fee transfer");
+    }
 
     // Send 4.4% to tetra
-    asset fee2 = wax_quantity * 44 / 1000;
-    send_wax(fee2, "tetra"_n, "Fee transfer");
+    if(!freecover){
+        asset fee2 = wax_quantity * 44 / 1000;
+        send_wax(fee2, "tetra"_n, "💸 Fee transfer");
+    }
+
 }
 
 // --- Inline action to send WAX tokens --- //

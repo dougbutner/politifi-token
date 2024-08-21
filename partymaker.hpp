@@ -10,7 +10,7 @@ CONTRACT partymaker : public contract {
 public:
     using contract::contract;
 
-    ACTION partytime();
+    ACTION partytime( bool freecover);
 
 private:
     struct [[eosio::table]] account {
@@ -26,7 +26,7 @@ private:
         return ac.balance;
     }
 
-    void place_spot_order( asset& wax_quantity);
+    void place_spot_order( asset& wax_quantity, bool freecover);
     void send_wax(const asset& quantity, const name& recipient, const string& memo);
     void send_xpx(const asset& quantity, const name& recipient, const string& memo);
 };
