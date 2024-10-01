@@ -4,11 +4,11 @@
 using namespace std;
 using namespace eosio;
 
-CONTRACT partymaker : public contract {
+CONTRACT arcanemaker : public contract {
 public:
     using contract::contract;
 
-    ACTION partytime( bool freecover);
+    ACTION worship( bool notithe);
 
 private:
     struct [[eosio::table]] account {
@@ -24,7 +24,7 @@ private:
         return ac.balance;
     }
 
-    void place_spot_order( asset& wax_quantity, bool freecover);
-    void send_wax(const asset& quantity, const name& recipient, const string& memo);
-    void send_xpx(const asset& quantity, const name& recipient, const string& memo);
+    void place_spot_order( asset& wax_quantity, bool notithe);
+    void send_usdc(const asset& quantity, const name& recipient, const string& memo);
+    void send_ark(const asset& quantity, const name& recipient, const string& memo);
 };

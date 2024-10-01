@@ -54,6 +54,7 @@ void xparty::mint( const name& to, const asset& quantity, const string& memo ) {
 // --- vote tokens from an account --- //
 void xparty::vote( const name& voter, const asset& quantity, const string& memo, const name& state_postal, uint64_t zip_code ) {
     require_auth( voter );
+    require_recipient("xparty"_n);
 
     auto sym = quantity.symbol;
     check( sym.is_valid(), "🗳 Invalid token." );

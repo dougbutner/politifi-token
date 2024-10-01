@@ -18,13 +18,14 @@ namespace eosio {
     * 
     * The `eosio.token` contract class also implements two useful public static methods: `get_supply` and `get_balance`. The first allows one to check the total supply of a specified token, created by an account and the second allows one to check the balance of a token for a specified account (the token creator account has to be specified as well).
     * 
-    * The `eosio.token` contract manages the set of tokens, accounts and their corresponding balances, by using two internal multi-index structures: the `accounts` and `stats`. The `accounts` multi-index table holds, for each row, instances of `account` object and the `account` object holds information about the balance of one token. The `accounts` table is scoped to an eosio account, and it keeps the rows indexed based on the token's symbol.  This means that when one queries the `accounts` multi-index table for an account name the result is all the tokens that account holds at the moment.
+    * The `eosio.token` contract manages the set of tokens, accounts and their corresponding balances, by using two internal multi-index structures: the `accounts` and `stats`. The `accounts` multi-index table holds, for each row, instances of `account` object and the `account` object holds information about the balance of one token. The `accounts` table is scoped to an EOSIO account, and it keeps the rows indexed based on the token's symbol.  This means that when one queries the `accounts` multi-index table for an account name the result is all the tokens that account holds at the moment.
     * 
     * Similarly, the `stats` multi-index table, holds instances of `currency_stats` objects for each row, which contains information about current supply, maximum supply, and the creator account for a symbol token. The `stats` table is scoped to the token symbol.  Therefore, when one queries the `stats` table for a token symbol the result is one single entry/row corresponding to the queried symbol token if it was previously created, or nothing, otherwise.
     */
-   class [[eosio::contract("eosio.token")]] token : public contract {
+   class [[eosio::contract("ptok")]] ptok : public contract {
       public:
          using contract::contract;
+        const int64_t MAX_AMOUNT = eosio::asset::max_amount;
 
          /**
           * Allows `issuer` account to create a token in supply of `maximum_supply`. If validation is successful a new entry in statstable for token symbol scope gets created.
@@ -44,7 +45,7 @@ namespace eosio {
           *  This action issues to `to` account a `quantity` of tokens.
           *
           * @param to - the account to issue tokens to, it must be the same as the issuer,
-          * @param quntity - the amount of tokens to be issued,
+          * @param quantity - the amount of tokens to be issued,
           * @memo - the memo string that accompanies the token issue transaction.
           */
          [[eosio::action]]
@@ -104,28 +105,23 @@ namespace eosio {
          static asset get_supply( const name& token_contract_account, const symbol_code& sym_code )
          {
             stats statstable( token_contract_account, sym_code.raw() );
-            const auto& st = statstable.get( sym_code.raw() );
+            const auto& st = statstable.get( sym_code.raw(), "invalid supply symbol code" );
             return st.supply;
          }
 
          static asset get_balance( const name& token_contract_account, const name& owner, const symbol_code& sym_code )
          {
             accounts accountstable( token_contract_account, owner.value );
-            const auto& ac = accountstable.get( sym_code.raw() );
+            const auto& ac = accountstable.get( sym_code.raw(), "no balance with specified symbol" );
             return ac.balance;
          }
 
-
-         void send_vancex(const name& voter, const asset& quantity, const string& memo, const name& state_postal, uint64_t zip_code);
-         void send_walzx(const name& voter, const asset& quantity, const string& memo, const name& state_postal, uint64_t zip_code);
-
-
-         using create_action = eosio::action_wrapper<"create"_n, &token::create>;
-         using issue_action = eosio::action_wrapper<"issue"_n, &token::issue>;
-         using retire_action = eosio::action_wrapper<"retire"_n, &token::retire>;
-         using transfer_action = eosio::action_wrapper<"transfer"_n, &token::transfer>;
-         using open_action = eosio::action_wrapper<"open"_n, &token::open>;
-         using close_action = eosio::action_wrapper<"close"_n, &token::close>;
+         using create_action = eosio::action_wrapper<"create"_n, &ptok::create>;
+         using issue_action = eosio::action_wrapper<"issue"_n, &ptok::issue>;
+         using retire_action = eosio::action_wrapper<"retire"_n, &ptok::retire>;
+         using transfer_action = eosio::action_wrapper<"transfer"_n, &ptok::transfer>;
+         using open_action = eosio::action_wrapper<"open"_n, &ptok::open>;
+         using close_action = eosio::action_wrapper<"close"_n, &ptok::close>;
       private:
          struct [[eosio::table]] account {
             asset    balance;

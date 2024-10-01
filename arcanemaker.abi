@@ -14,11 +14,11 @@
             ]
         },
         {
-            "name": "partytime",
+            "name": "worship",
             "base": "",
             "fields": [
                 {
-                    "name": "freecover",
+                    "name": "notithe",
                     "type": "bool"
                 }
             ]
@@ -26,8 +26,8 @@
     ],
     "actions": [
         {
-            "name": "partytime",
-            "type": "partytime",
+            "name": "worship",
+            "type": "worship",
             "ricardian_contract": ""
         }
     ],
